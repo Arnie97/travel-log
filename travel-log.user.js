@@ -8,6 +8,19 @@
 // @version     2018.02.19
 // ==/UserScript==
 
+var stations = station_names.split('@').map(function(i) {
+    return i.split('|');
+});
+stations.shift();
+
+function getStationName(telecode) {
+    for (var i = 0; i < stations.length; i++) {
+        if (stations[i][2] === telecode) {
+            return stations[i][1];
+        }
+    }
+}
+
 function getFormDate(name) {
     return $('#data' + name).val().replace(/-/g, '');
 }
@@ -34,7 +47,13 @@ function getTradeDetail(trade) {
     };
     $.post(url.PointDetailQuery, data, function(response) {
         if (response.status && response.data.length) {
-            console.log(response.data[0]);
+            collect(response.data[0]);
         }
     });
+}
+
+function collect(x) {
+    x.arrive_station_name = getStationName(x.arrive_station_telecode);
+    x. board_station_name = getStationName(x. board_station_telecode);
+    console.log(x);
 }
