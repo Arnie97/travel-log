@@ -8,17 +8,16 @@
 // @version     2018.02.19
 // ==/UserScript==
 
-var stations = station_names.split('@').map(function(i) {
-    return i.split('|');
-});
-stations.shift();
+var seatTypeNames = createIndex(seatTypes, ':', 0, 1);
+var stations = createIndex(station_names, '|', 2, 1);
 
-function getStationName(telecode) {
-    for (var i = 0; i < stations.length; i++) {
-        if (stations[i][2] === telecode) {
-            return stations[i][1];
-        }
-    }
+function createIndex(database, delimiter, key, value) {
+    var index = {};
+    database.split('@').forEach(function(i) {
+        var row = i.split(delimiter);
+        index[row[key]] = row[value];
+    });
+    return index;
 }
 
 function getFormDate(name) {
@@ -54,8 +53,9 @@ function getTradeDetail(trade) {
 
 function collect(x) {
     x.ticket_price /= 10;
-    x.arrive_station_name = getStationName(x.arrive_station_telecode);
-    x. board_station_name = getStationName(x. board_station_telecode);
+    x.seat_type_name = seatTypeNames[x.seat_type_code];
+    x.arrive_station_name = stations[x.arrive_station_telecode];
+    x. board_station_name = stations[x. board_station_telecode];
     for (var key in x) {
         if (key.slice(0, 4) === 'flag') {
             delete x[key];
