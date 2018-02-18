@@ -8,6 +8,7 @@
 // @version     2018.02.19
 // ==/UserScript==
 
+var results = [];
 var seatTypeNames = createIndex(seatTypes, ':', 0, 1);
 var stations = createIndex(station_names, '|', 2, 1);
 
@@ -40,6 +41,7 @@ function listTrades() {
 }
 
 function getTradeDetail(trade) {
+    results = [];
     var data = {
         'queryType': trade.trade_type,
         'trade_id':  trade.trade_id
@@ -61,5 +63,16 @@ function collect(x) {
             delete x[key];
         }
     }
-    console.log(x);
+    results.push(x);
+}
+
+function jsonToCsv(array) {
+    var fields = Object.keys(array[0]);
+    var csv = array.map(function(row) {
+        return fields.map(function(fieldName) {
+            return JSON.stringify(row[fieldName]);
+        }).join(',');
+    });
+    csv.unshift(fields.join(','));  // add the header
+    return csv.join('\n');
 }
