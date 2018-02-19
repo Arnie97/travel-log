@@ -53,7 +53,13 @@ function getTradeDetail(trade) {
 }
 
 function collect(x) {
+    x.ticket_price /= 10;
     x.arrive_station_name = getStationName(x.arrive_station_telecode);
     x. board_station_name = getStationName(x. board_station_telecode);
+    for (var key in x) {
+        if (key.slice(0, 4) === 'flag') {
+            delete x[key];
+        }
+    }
     console.log(x);
 }
