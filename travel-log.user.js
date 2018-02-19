@@ -71,7 +71,7 @@ function getTradeDetail(trade) {
 }
 
 function collect(x) {
-    x.ticket_price /= 10;
+    x.ticket_price = (x.ticket_price / 10).toFixed(1);
     x.seat_type_name = seatTypeNames[x.seat_type_code];
     x.arrive_station_name = stations[x.arrive_station_telecode];
     x. board_station_name = stations[x. board_station_telecode];
@@ -87,8 +87,10 @@ function jsonToCsv(array) {
     var fields = Object.keys(array[0]);
     var csv = array.map(function(row) {
         return fields.map(function(fieldName) {
-            return JSON.stringify(row[fieldName]);
-        }).join(',');
+            return row[fieldName];
+        }).join(',\t');
+        // the tab character here for Microsoft Excel
+        // https://stackoverflow.com/a/15107122/5072722
     });
     csv.unshift(fields.join(','));  // add the header
     return csv.join('\n');
