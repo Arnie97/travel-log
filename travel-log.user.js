@@ -11,6 +11,7 @@
 // ==/UserScript==
 
 var results = [];
+var remainingTasks = 0;
 var seatTypeNames = createIndex(seatTypes, ':', 0, 1);
 var stations = createIndex(station_names, '|', 2, 1);
 addButton();
@@ -46,15 +47,11 @@ function listTrades() {
     };
     $.post(url.pointSimpleQuery, data, function(response) {
         if (response.status) {
+            remainingTasks = response.data.length;
             response.data.forEach(getTradeDetail);
         }
     });
-
     showLoading();
-    setTimeout(function() {
-        hideLoading();
-        exportCsv(results);
-    }, 10000)
 }
 
 function getTradeDetail(trade) {
@@ -66,6 +63,10 @@ function getTradeDetail(trade) {
     $.post(url.PointDetailQuery, data, function(response) {
         if (response.status && response.data.length) {
             collect(response.data[0]);
+        }
+        if (--remainingTasks === 0) {
+            hideLoading();
+            exportCsv(results);
         }
     });
 }
