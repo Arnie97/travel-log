@@ -5,6 +5,8 @@
 // @namespace   https://github.com/Arnie97
 // @homepageURL https://github.com/Arnie97/travel-log
 // @match       https://cx.12306.cn/tlcx/jfinformation.html
+// @require     https://cdn.staticfile.org/FileSaver.js/1.3.3/FileSaver.min.js
+// @grant       none
 // @version     2018.02.19
 // ==/UserScript==
 
@@ -75,4 +77,11 @@ function jsonToCsv(array) {
     });
     csv.unshift(fields.join(','));  // add the header
     return csv.join('\n');
+}
+
+function exportCsv(array) {
+    var mimeType = 'text/csv;charset=utf-8';
+    var blob = new Blob([jsonToCsv(array)], {type: mimeType});
+    var fileName = getFormDate('Start') + '-' + getFormDate('End') + '.csv';
+    saveAs(blob, fileName);
 }
