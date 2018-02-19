@@ -13,6 +13,7 @@
 var results = [];
 var seatTypeNames = createIndex(seatTypes, ':', 0, 1);
 var stations = createIndex(station_names, '|', 2, 1);
+addButton();
 
 function createIndex(database, delimiter, key, value) {
     var index = {};
@@ -25,6 +26,14 @@ function createIndex(database, delimiter, key, value) {
 
 function getFormDate(name) {
     return $('#data' + name).val().replace(/-/g, '');
+}
+
+function addButton() {
+    var button = $('<a>').addClass('btn btn-primary').text('导出');
+    button.click(listTrades);
+    $('.dataDouble').width(600);
+    $('.dataDouble>ul>li>input').width(80);
+    $('<li>').append(button).appendTo('.dataDouble>ul');
 }
 
 function listTrades() {
@@ -40,6 +49,12 @@ function listTrades() {
             response.data.forEach(getTradeDetail);
         }
     });
+
+    showLoading();
+    setTimeout(function() {
+        hideLoading();
+        exportCsv(results);
+    }, 10000)
 }
 
 function getTradeDetail(trade) {
