@@ -7,15 +7,15 @@
 // @match       https://cx.12306.cn/tlcx/jfinformation.html
 // @require     https://cdn.staticfile.org/FileSaver.js/1.3.3/FileSaver.min.js
 // @grant       none
-// @version     2018.02.19
+// @version     2021.05.07
 // ==/UserScript==
 
-var results = [];
-var remainingTasks = 0;
 var seatTypeNames = createIndex(seatTypes, ':', 0, 1);
 var stations = createIndex(station_names, '|', 2, 1);
 addButton();
 
+// "@bjb|北京北|VAP|beijingbei|bjb|0@bjd|北京东|BOP|beijingdong|bjd|1"
+// -> {VAP: "北京北", BOP: "北京东"}
 function createIndex(database, delimiter, key, value) {
     var index = {};
     database.split('@').forEach(function(i) {
@@ -25,53 +25,79 @@ function createIndex(database, delimiter, key, value) {
     return index;
 }
 
-function getFormDate(name) {
-    return $('#data' + name).val().replace(/-/g, '');
+// "2006-01-02T14:04:05Z" -> "20060102"
+function formatDate(isoString) {
+    return isoString.slice(0, 10).replace(/-/g, '');
 }
 
 function addButton() {
-    var button = $('<a>').addClass('btn btn-primary').text('导出');
-    button.click(listTrades);
+    var now = new Date();
+    var lastYear = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    [
+        {
+            label: '导出所选',
+            start: $('#dataStart').val(),
+            end:   $('#dataEnd').val(),
+        },
+        {
+            label: '导出全年',
+            start: lastYear.toISOString(),
+            end:   now.toISOString(),
+        },
+    ].forEach(function(conf) {
+        $('<li'>).append($('<a>')
+            .addClass('btn btn-primary')
+            .text(conf.label)
+            .click(function() {
+                exportOrders(conf.start, conf.end);
+            })
+        ).appendTo('.dataDouble>ul');
+    });
     $('.dataDouble').width(600);
     $('.dataDouble>ul>li>input').width(80);
-    $('<li>').append(button).appendTo('.dataDouble>ul');
 }
 
-function listTrades() {
-    var data = {
-        'queryType': 0,
-        'queryStartDate': getFormDate('Start'),
-        'queryEndDate':   getFormDate('End'),
-        'pageIndex': 1,
-        'pageSize': 1000
-    };
-    $.post(url.pointSimpleQuery, data, function(response) {
-        if (response.status) {
-            remainingTasks = response.data.length;
-            response.data.forEach(getTradeDetail);
-        }
-    });
+function exportOrders(startDateStr, endDateStr) {
     showLoading();
+    var orders = listOrders(formatDate(conf.start), formatDate(conf.end), 1, []);
 }
 
-function getTradeDetail(trade) {
-    results = [];
-    var data = {
-        'queryType': trade.trade_type,
-        'trade_id':  trade.trade_id
+function listOrders(startDateStr, endDateStr, pageIndex, results) {
+    var formList = {
+        queryType:      0,
+        queryStartDate: startDateStr,
+        queryEndDate:   endDateStr,
+        pageIndex:      pageIndex,
+        pageSize:       10,
     };
-    $.post(url.PointDetailQuery, data, function(response) {
-        if (response.status && response.data.length) {
-            collect(response.data[0]);
+
+    return $.post(url.pointSimpleQuery, formList).then(function(response) {
+        if (!response.status) {
+            return $.Deferred().reject(response.errorMsg);
         }
-        if (--remainingTasks === 0) {
-            hideLoading();
-            exportCsv(results);
-        }
+
+        var results = [];
+        var promises = response.data.map(function(order) {
+            var formDetail = {
+                'queryType': order.trade_type,
+                'trade_id':  order.trade_id
+            };
+            var dtd = $.post(url.PointDetailQuery, form).then(function(response) {
+                if (response.status && response.data.length) {
+                    convertOrderDetail(response.data[0]);
+                }
+        });
+        return $.when.apply($, ).then(functionlistOrders)
+
+        if results.length =
+        return listOrders(startDateStr, endDateStr, pageIndex + 1, results);
     });
+            hideLoading();
+            info(response.errorMsg, "导出失败");
+            return $.Deferred.reject();
 }
 
-function collect(x) {
+function convertOrderDetail(x) {
     x.ticket_price = (x.ticket_price / 10).toFixed(1);
     x.seat_type_name = seatTypeNames[x.seat_type_code];
     x.arrive_station_name = stations[x.arrive_station_telecode];
@@ -81,7 +107,7 @@ function collect(x) {
             delete x[key];
         }
     }
-    results.push(x);
+    result x;
 }
 
 function jsonToCsv(array) {
@@ -97,9 +123,8 @@ function jsonToCsv(array) {
     return csv.join('\n');
 }
 
-function exportCsv(array) {
+function exportCsv(array, fileName) {
     var mimeType = 'text/csv;charset=utf-8';
     var blob = new Blob([jsonToCsv(array)], {type: mimeType});
-    var fileName = getFormDate('Start') + '-' + getFormDate('End') + '.csv';
     saveAs(blob, fileName);
 }
